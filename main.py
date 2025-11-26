@@ -35,16 +35,17 @@ class Main:
         try:
             while self.is_running:
                 # --- STAP 1: KIJKEN ---
-                # Haal foto op uit camera.py
+                # Haal live frame op uit camera.py
                 frame = self.cam.snapshot()
 
                 # --- STAP 2: TONEN ---
-                # Stuur beeld naar raspberryPi.py
-                self.interface.update_live(frame)
+                # Toon het huidige beeld in raspberryPi.py zolang er geen gezicht is herkend
+                if not gevonden_naam:
+                    self.interface.update_live(frame)
 
                 # --- STAP 3: DENKEN ---
-                # Vraag aan gezichtsherkenner.py: "Wie is dit?"
-                # (Dit geeft een naam terug, of None als er niemand is)
+                # Vraag aan face.py: "Is dit een gezochte persoon?"
+                # Geeft een naam terug of None wanneer geen match
                 gevonden_naam = self.face.faceScan(frame)
 
                 if gevonden_naam:
