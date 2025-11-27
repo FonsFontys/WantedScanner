@@ -45,7 +45,7 @@ class Main:
 
                 # --- STAP 3: DENKEN ---
                 # Vraag aan face.py: "Is dit een gezochte persoon?"
-                # Geeft een naam terug of None wanneer geen match
+                # Geeft een naam terug of None wanneer geen matchen gezochte persoon?"
                 gevonden_naam = self.face.faceScan(frame)
 
                 if gevonden_naam:
@@ -57,8 +57,8 @@ class Main:
 
                     if persoon_object:
                         # --- STAP 5: ACTIE ---
-                        # Laat poster zien op scherm
-                        self.gui.wanted_poster(persoon_object)
+                        # Toon de wanted-poster op het Raspberry Pi scherm
+                        self.interface.wanted_poster(persoon_object)
 
                         # Check gevaar en stuur Arduino aan
                         if persoon_object.danger_level > 80:
@@ -68,7 +68,8 @@ class Main:
                             self.arduino.lampOff()
                 
                 else:
-                    # Niemand gezien? Zorg dat lamp uit is.
+                    # Niemand gezien? Toon live beeld en zorg dat lamp uit is.
+                    self.interface.update_live(frame)
                     self.arduino.lampOff()
 
                 # Korte pauze om de processor rust te geven
