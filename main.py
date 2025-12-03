@@ -5,6 +5,7 @@ import time
 # ---------------------------------------------------------
 from camera import Camera
 from database import Database
+from arduino import Arduino
 from face import Gezichtsherkenner
 from raspberryPi import Interface 
 
@@ -40,7 +41,7 @@ class Main:
     def run(self):
         # 1. Start verbindingen
         print("[MAIN] Verbinding maken met database...")
-        #self.db.connection()
+        self.db.connection()
         
         print("[MAIN] Systeem is gestart! Druk Ctrl+C om te stoppen.")
 
