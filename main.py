@@ -4,6 +4,7 @@ import time
 # IMPORTS
 # ---------------------------------------------------------
 from camera import Camera
+from database import Database
 from face import Gezichtsherkenner
 from raspberryPi import Interface 
 
@@ -37,7 +38,9 @@ class Main:
         self.is_running = True
 
     def run(self):
-        # self.db.connection() # Later weer aanzetten
+        # 1. Start verbindingen
+        print("[MAIN] Verbinding maken met database...")
+        #self.db.connection()
         
         print("[MAIN] Systeem is gestart! Druk Ctrl+C om te stoppen.")
 
