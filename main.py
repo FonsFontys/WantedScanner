@@ -5,7 +5,7 @@ import time
 # ---------------------------------------------------------
 from camera import Camera
 from database import Database
-from arduino import Arduino
+#from arduino import Arduino
 from face import Gezichtsherkenner
 from raspberryPi import Interface  # In je UML heet de class RaspberryPi
 # Persoon hoef je hier misschien niet te importeren als je hem 
@@ -28,7 +28,7 @@ class Main:
     def run(self):
         # 1. Start verbindingen
         print("[MAIN] Verbinding maken met database...")
-        self.db.connection()
+        #self.db.connection()
         
         print("[MAIN] Systeem is gestart!")
 
