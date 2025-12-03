@@ -1,87 +1,78 @@
 import time
 
 # ---------------------------------------------------------
-# HIER IMPORTEER JE JE ANDERE BESTANDEN
+# IMPORTS
 # ---------------------------------------------------------
 from camera import Camera
-from database import Database
-from arduino import Arduino
 from face import Gezichtsherkenner
-from raspberryPi import Interface  # In je UML heet de class RaspberryPi
-# Persoon hoef je hier misschien niet te importeren als je hem 
-# alleen via de database ontvangt, maar voor type-hinting is het handig:
-# from person import Persoon 
+from raspberryPi import Interface 
 
+# Even uitgezet tot de database werkt:
+# from database import Database  
+
+# ---------------------------------------------------------
+# MOCK CLASS (TIJDELIJKE VERVANGER VOOR DATABASE)
+# ---------------------------------------------------------
+class MockPersoon:
+    def __init__(self, naam):
+        self.naam = naam
+        self.leeftijd = 25          # We verzinnen een leeftijd
+        self.afkomst = "Nederlands" # We verzinnen een afkomst
+        self.danger_level = 85      # Zet dit op 85 om de lamp te testen (boven de 80)
+
+# ---------------------------------------------------------
+# MAIN CLASS
+# ---------------------------------------------------------
 class Main:
     def __init__(self):
-        print("[MAIN] Systeem initialiseren...")
+        print("[MAIN] Systeem initialiseren (TEST MODUS)...")
 
-        # Hier maak je de 'echte' objecten aan vanuit de andere bestanden
+        # Objecten aanmaken
         self.cam = Camera()
         self.face = Gezichtsherkenner()
-        self.db = Database()
-        self.arduino = Arduino()
         self.interface = Interface()
+        
+        # self.db = Database() # Later weer aanzetten
 
         self.is_running = True
 
     def run(self):
-        # 1. Start verbindingen
-        print("[MAIN] Verbinding maken met database...")
-        self.db.connection()
+        # self.db.connection() # Later weer aanzetten
         
-        print("[MAIN] Systeem is gestart!")
+        print("[MAIN] Systeem is gestart! Druk Ctrl+C om te stoppen.")
 
         try:
             while self.is_running:
                 # --- STAP 1: KIJKEN ---
-                # Haal live frame op uit camera.py
                 frame = self.cam.snapshot()
 
-                # --- STAP 2: TONEN ---
-                # Toon het huidige beeld in raspberryPi.py zolang er geen gezicht is herkend
-                if not gevonden_naam:
-                    self.interface.update_live(frame)
-
-                # --- STAP 3: DENKEN ---
-                # Vraag aan face.py: "Is dit een gezochte persoon?"
-                # Geeft een naam terug of None wanneer geen matchen gezochte persoon?"
+                # --- STAP 2: DENKEN (Wie is dit?) ---
                 gevonden_naam = self.face.faceScan(frame)
 
+                # --- STAP 3: ACTIE ---
+                # ... in de while loop ...
+                
+                # --- STAP 3: ACTIE ---
                 if gevonden_naam:
                     print(f"[MAIN] Iemand gezien: {gevonden_naam}")
+                    persoon_object = MockPersoon(gevonden_naam)
                     
-                    # --- STAP 4: DATA OPHALEN ---
-                    # Vraag aan database.py: "Geef mij de info van deze naam"
-                    persoon_object = self.db.person_on_id(gevonden_naam)
-
-                    if persoon_object:
-                        # --- STAP 5: ACTIE ---
-                        # Toon de wanted-poster op het Raspberry Pi scherm
-                        self.interface.wanted_poster(persoon_object)
-
-                        # Check gevaar en stuur Arduino aan
-                        if persoon_object.danger_level > 80:
-                            print("[MAIN] GEVAAR! Lamp aan.")
-                            self.arduino.lampOn()
-                        else:
-                            self.arduino.lampOff()
+                    # GEEF HET FRAME MEE!
+                    self.interface.send_match(persoon_object, frame)
                 
                 else:
-                    # Niemand gezien? Toon live beeld en zorg dat lamp uit is.
-                    self.interface.update_live(frame)
-                    self.arduino.lampOff()
+                    # GEEF HET FRAME MEE!
+                    self.interface.send_reset(frame)
 
-                # Korte pauze om de processor rust te geven
+                # Korte pauze om de processor niet op te blazen
                 time.sleep(0.1)
 
         except KeyboardInterrupt:
-            # Dit gebeurt als je Ctrl+C drukt
             print("\n[MAIN] Stoppen...")
-            self.arduino.lampOff()
+            # Eventueel hier nog een send_reset() sturen om de lamp zeker uit te zetten
+            self.interface.send_reset()
             print("[MAIN] Tot ziens!")
 
-# Dit zorgt dat het programma start als je op Play drukt
 if __name__ == "__main__":
     app = Main()
     app.run()

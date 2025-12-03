@@ -1,0 +1,84 @@
+import time
+
+# ---------------------------------------------------------
+# HIER IMPORTEER JE JE ANDERE BESTANDEN
+# ---------------------------------------------------------
+from camera import Camera
+from database import Database
+from arduino import Arduino
+from face import Gezichtsherkenner
+from raspberryPi import requests  # Zorg dat deze class 'requests' gebruikt!
+
+class Main:
+    def __init__(self):
+        print("[MAIN] Systeem initialiseren...")
+
+        # Hier maak je de 'echte' objecten aan vanuit de andere bestanden
+        self.cam = Camera()
+        self.face = Gezichtsherkenner()
+        self.db = Database()
+        self.arduino = Arduino()
+        self.interface = requests() # Dit object regelt nu het sturen naar de Pi
+
+        self.is_running = True
+
+    def run(self):
+        # 1. Start verbindingen
+        print("[MAIN] Verbinding maken met database...")
+        self.db.connection()
+        
+        print("[MAIN] Systeem is gestart!")
+
+        try:
+            while self.is_running:
+                # --- STAP 1: KIJKEN ---
+                # Haal live frame op uit camera.py
+                frame = self.cam.snapshot()
+
+                # --- STAP 2: DENKEN (Gezichtsherkenning) ---
+                # Vraag aan face.py: "Is dit een gezochte persoon?"
+                # Dit moet EERST gebeuren, voordat we beslissen wat we tonen
+                gevonden_naam = self.face.faceScan(frame)
+
+                # --- STAP 3: BESLISSEN & COMMUNICEREN ---
+                if gevonden_naam:
+                    print(f"[MAIN] Iemand gezien: {gevonden_naam}")
+                    
+                    # Haal info op uit database
+                    persoon_object = self.db.person_on_id(gevonden_naam)
+
+                    if persoon_object:
+                        # ACTIE 1: Stuur commando naar Raspberry Pi (Het scherm)
+                        # We sturen nu de DATA, niet het frame (Pi regelt zijn eigen stream)
+                        print("[MAIN] Data naar Pi sturen...")
+                        self.interface.send_match(persoon_object)
+
+                        # ACTIE 2: Check gevaar en stuur Arduino aan
+                        if persoon_object.danger_level > 80:
+                            print(f"[MAIN] GEVAAR ({persoon_object.danger_level}%)! Lamp AAN.")
+                            self.arduino.lampOn()
+                        else:
+                            self.arduino.lampOff()
+                
+                else:
+                    # NIEMAND GEZIEN
+                    # Vertel de Pi dat het veilig is (zodat de overlay verdwijnt)
+                    # We doen dit zodat de tekst op het scherm weggaat als de persoon wegloopt
+                    self.interface.send_reset()
+                    
+                    # Zorg dat Arduino lamp uit is
+                    self.arduino.lampOff()
+
+                # Korte pauze om de processor en het netwerk rust te geven
+                time.sleep(0.1)
+
+        except KeyboardInterrupt:
+            # Dit gebeurt als je Ctrl+C drukt
+            print("\n[MAIN] Stoppen...")
+            self.arduino.lampOff()
+            print("[MAIN] Tot ziens!")
+
+# Dit zorgt dat het programma start als je op Play drukt
+if __name__ == "__main__":
+    app = Main()
+    app.run()
