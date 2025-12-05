@@ -64,13 +64,13 @@ def get_all_people():
     people = []
     try:
         db = mysql.connector.connect(**DB_CONFIG)
-        cursor = db.cursor()
+        cursor = db.cursor(raw=True, buffered=True)
         cursor.execute("""
             SELECT id, Voornaam, Achternaam, Leeftijd, Oogkleur, Geslacht, 
-                   Belangrijke_kenmerken, Gevaarlijkheid_niveau, Gezocht_door, image
+            Belangrijke_kenmerken, Gevaarlijkheid_niveau, Gezocht_door, WantedPoster
             FROM database_gegevens
         """)
-        rows = cursor.fetchall()
+        rows = cursor.fetchall()        
 
         for row in rows:
             (id, first, last, age, eye, gender, features,
